@@ -12,6 +12,8 @@
             --text-color: #FFFFFF;
             --accent: #FFB300;
             --danger: #FF4444;
+            --sabado-color: #00E5FF;
+            --domingo-color: #E040FB;
         }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -119,10 +121,7 @@
             color: black;
             border-color: var(--accent);
         }
-        /* Estilo para ocultar tallas que no corresponden a la categoría */
-        .talla-btn.hidden {
-            display: none;
-        }
+        .talla-btn.hidden { display: none; }
 
         .btn-register {
             background-color: var(--primary);
@@ -137,29 +136,41 @@
         }
         .btn-register:active { background-color: #00CC6E; }
 
-        .log-container {
+        /* Apartados de Visualización por Día */
+        .day-section {
             background-color: var(--card-bg);
             border: 2px solid #333;
             border-radius: 8px;
             padding: 15px;
-            margin-top: 10px;
+            margin-top: 15px;
         }
+        .day-header {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #444;
+            display: flex;
+            justify-content: space-between;
+        }
+        .sabado-header { color: var(--sabado-color); border-color: var(--sabado-color); }
+        .domingo-header { color: var(--domingo-color); border-color: var(--domingo-color); }
+        
         .log-list {
             list-style: none;
             padding: 0;
             margin: 0;
-            max-height: 250px;
+            max-height: 180px;
             overflow-y: auto;
         }
         .log-item {
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #2A2A2A;
-            font-size: 15px;
+            font-size: 14px;
             display: flex;
             justify-content: space-between;
         }
         
-        /* Botón de Borrado de Inventario Semanal */
         .btn-clear {
             background-color: #2A1414;
             color: var(--danger);
@@ -170,7 +181,8 @@
             border-radius: 6px;
             width: 100%;
             cursor: pointer;
-            margin-top: 15px;
+            margin-top: 25px;
+            margin-bottom: 30px;
         }
         .btn-clear:active {
             background-color: var(--danger);
@@ -191,7 +203,7 @@
             <button class="category-btn" onclick="selectCategory('Cunero', this)">👶 Cunero</button>
             <button class="category-btn" onclick="selectCategory('Huarache Pequeño', this)">🩴 Huarache Pq.</button>
             <button class="category-btn" onclick="selectCategory('Zapato Pequeño', this)">👞 Zapato Pq.</button>
-            <button class="category-btn" onclick="selectCategory('Tenis', this)">¼️ Tenis Pq.</button>
+            <button class="category-btn" onclick="selectCategory('Tenis', this)">👟 Tenis Pq.</button>
             <button class="category-btn" onclick="selectCategory('Valeriana', this)">🩰 Valeriana</button>
             <button class="category-btn" onclick="selectCategory('Zapato Grande', this)">👞 Zapato Gde.</button>
             <button class="category-btn" onclick="selectCategory('Huarache Grande', this)">🩴 Huarache Gd.</button>
@@ -219,20 +231,31 @@
             <button class="btn-register" onclick="registrarVenta()">📝 Registrar Venta (Local)</button>
         </div>
 
-        <div class="log-container">
-            <label style="color: var(--primary);">📥 VENTAS ACUMULADAS DE LA SEMANA:</label>
-            <ul id="log-list" class="log-list">
+        <div class="day-section">
+            <div class="day-header sabado-header">
+                <span>🗓️ VENTAS DEL SÁBADO</span>
+                <span id="total-sabado">0 pares</span>
+            </div>
+            <ul id="list-sabado" class="log-list">
                 </ul>
-            
-            <button class="btn-clear" onclick="borrarVentasSemanales()">🗑️ Borrar Ventas y Empezar Nueva Semana</button>
         </div>
+
+        <div class="day-section">
+            <div class="day-header domingo-header">
+                <span>🗓️ VENTAS DEL DOMINGO</span>
+                <span id="total-domingo">0 pares</span>
+            </div>
+            <ul id="list-domingo" class="log-list">
+                </ul>
+        </div>
+        
+        <button class="btn-clear" onclick="borrarVentasSemanales()">🗑️ Borrar Todo e Iniciar Nueva Semana</button>
     </div>
 
     <script>
         let categoriaSeleccionada = "";
         let tallaSeleccionada = "";
 
-        // Mapeo exacto de tallas por pestaña de tu Excel original
         const mapaTallas = {
             'Cunero': ['9', '10', '11', '12'],
             'Huarache Pequeño': ['10', '11', '12'],
@@ -263,11 +286,9 @@
             element.classList.add('active');
             categoriaSeleccionada = category;
 
-            // Resetear la talla anterior si cambia de categoría
             tallaSeleccionada = "";
             document.querySelectorAll('.talla-btn').forEach(btn => btn.classList.remove('active'));
 
-            // Filtrar la botonera de tallas automáticamente según tus listas
             const tallasPermitidas = mapaTallas[category] || [];
             document.querySelectorAll('.talla-btn').forEach(btn => {
                 const t = btn.getAttribute('data-talla');
@@ -294,10 +315,15 @@
                 return;
             }
 
+            // DETECTAR EL DÍA REAL: Si hoy es domingo guardará como "Domingo", de lo contrario por defecto va a "Sábado" (ideal para el tianguis)
+            const numeroDia = new Date().getDay(); 
+            const diaRegistro = (numeroDia === 0) ? "Domingo" : "Sábado";
+
             const venta = {
                 categoria: categoriaSeleccionada,
                 modelo: modelo,
                 talla: tallaSeleccionada,
+                dia: diaRegistro,
                 hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             };
 
@@ -313,31 +339,47 @@
         }
 
         function cargarVentasLocales() {
-            const lista = document.getElementById('log-list');
-            lista.innerHTML = "";
+            const listSabado = document.getElementById('list-sabado');
+            const listDomingo = document.getElementById('list-domingo');
+            
+            listSabado.innerHTML = "";
+            listDomingo.innerHTML = "";
+            
             let ventasActuales = JSON.parse(localStorage.getItem('ventas_tianguis')) || [];
             
-            if(ventasActuales.length === 0) {
-                lista.innerHTML = `<li class="log-item" style="color:#666; justify-content:center;">No hay ventas registradas esta semana.</li>`;
-                return;
-            }
+            let countSabado = 0;
+            let countDomingo = 0;
 
-            // Muestra lo más nuevo arriba
-            ventasActuales.reverse().forEach(v => {
+            // Recorrer al revés para mostrar lo más nuevo arriba
+            ventasActuales.slice().reverse().forEach(v => {
                 const li = document.createElement('li');
                 li.className = "log-item";
-                li.innerHTML = `<span><strong>[${v.categoria}]</strong> ${v.modelo} - Talla ${v.talla}</span> <span style="color:#888;">${v.hora}</span>`;
-                lista.appendChild(li);
+                li.innerHTML = `<span><strong>[${v.categoria}]</strong> ${v.modelo} - T. ${v.talla}</span> <span style="color:#888;">${v.hora}</span>`;
+                
+                if (v.dia === "Sábado") {
+                    listSabado.appendChild(li);
+                    countSabado++;
+                } else {
+                    listDomingo.appendChild(li);
+                    countDomingo++;
+                }
             });
+
+            // Mostrar mensajes si están vacíos
+            if (countSabado === 0) listSabado.innerHTML = `<li class="log-item" style="color:#666; justify-content:center;">Sin ventas registradas este sábado.</li>`;
+            if (countDomingo === 0) listDomingo.innerHTML = `<li class="log-item" style="color:#666; justify-content:center;">Sin ventas registradas este domingo.</li>`;
+
+            // Actualizar contadores totales de pares vendidos
+            document.getElementById('total-sabado').textContent = `${countSabado} ${countSabado === 1 ? 'par' : 'pares'}`;
+            document.getElementById('total-domingo').textContent = `${countDomingo} ${countDomingo === 1 ? 'par' : 'pares'}`;
         }
 
-        // NUEVA FUNCIÓN: Alerta de confirmación para limpiar la pantalla de forma segura
         function borrarVentasSemanales() {
-            const respuesta = confirm("¿Estás seguro de que deseas borrar todas las ventas registradas? Asegúrate de haber anotado o sacado tu pedido antes.");
+            const respuesta = confirm("⚠️ ¿Estás seguro de borrar todo? Esto eliminará el registro de Sábado y Domingo para iniciar una nueva semana de ventas.");
             if (respuesta) {
                 localStorage.removeItem('ventas_tianguis');
                 cargarVentasLocales();
-                alert("El registro se ha limpiado. ¡Listo para el próximo fin de semana!");
+                alert("¡Registros borrados con éxito! Pantalla en ceros para la próxima semana.");
             }
         }
 
