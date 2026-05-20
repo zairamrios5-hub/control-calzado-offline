@@ -3,58 +3,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Calzado - Offline First</title>
+    <title>Control de Inventario - Calzado Infantil</title>
     <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1E1E1E;
+            --primary: #00FF88;
+            --text-color: #FFFFFF;
+            --accent: #FFB300;
+        }
         body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #FFFFFF;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        h1 {
-            color: #00FF88;
-            font-size: 24px;
+        header {
             text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 500px;
         }
-        .card {
-            background-color: #1E1E1E;
+        h1 {
+            color: var(--primary);
+            font-size: 22px;
+            margin: 5px 0;
+        }
+        .status-badge {
+            background-color: #2e2e2e;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            border: 1px solid #444;
+        }
+        .online { color: var(--primary); }
+        .offline { color: #FF4444; }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        
+        /* Sección de Categorías del Inventario */
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent);
+        }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .category-btn {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid #333;
+            padding: 15px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .category-btn.active {
+            border-color: var(--primary);
+            background-color: #153325;
+        }
+
+        /* Formulario de registro rápido */
+        .form-group {
+            background-color: var(--card-bg);
             border: 2px solid #333;
             border-radius: 8px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            padding: 15px;
+            margin-bottom: 20px;
         }
-        button {
-            background-color: #00FF88;
-            color: #000000;
+        .input-text {
+            width: 100%;
+            padding: 12px;
+            background-color: #2A2A2A;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+        
+        /* Selector de Tallas Gigante para Exterior */
+        .tallas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .talla-btn {
+            background-color: #2A2A2A;
+            color: white;
+            border: 1px solid #444;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .talla-btn.active {
+            background-color: var(--accent);
+            color: black;
+            border-color: var(--accent);
+        }
+
+        .btn-register {
+            background-color: var(--primary);
+            color: #000;
             border: none;
             padding: 15px;
             font-size: 18px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 6px;
             width: 100%;
             cursor: pointer;
-            margin-top: 15px;
         }
-        button:active {
-            background-color: #00CC6E;
+        .btn-register:active { background-color: #00CC6E; }
+
+        /* Registro Temporal Local */
+        .log-container {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .log-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .log-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #2A2A2A;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
 <body>
 
-    <h1>Control de Calzado (Tallas 9-17)</h1>
-    
-    <div class="card">
-        <p style="text-align: center; font-size: 16px;">¡Tu entorno web Offline-First está listo para ser desarrollado!</p>
-        <button onclick="alert('¡Pronto registrarás ventas aquí!')">Simular Registro</button>
+    <header>
+        <h1>Control de Ventas</h1>
+        <div class="status-badge">Estado de Red: <span id="network-status" class="online">● Conectado (Wi-Fi)</span></div>
+    </header>
+
+    <div class="container">
+        <label>1. SELECCIONA LA CATEGORÍA:</label>
+        <div class="category-grid">
+            <button class="category-btn" onclick="selectCategory('Cunero', this)">👶 Cunero</button>
+            <button class="category-btn" onclick="selectCategory('Huarache Pequeño', this)">🩴 Huarache Pq.</button>
+            <button class="category-btn" onclick="selectCategory('Zapato Pequeño', this)">👞 Zapato Pq.</button>
+            <button class="category-btn" onclick="selectCategory('Tenis', this)">👟 Tenis Pq.</button>
+            <button class="category-btn" onclick="selectCategory('Valeriana', this)">🩰 Valeriana</button>
+            <button class="category-btn" onclick="selectCategory('Zapato Grande', this)">👞 Zapato Gde.</button>
+            <button class="category-btn" onclick="selectCategory('Huarache Grande', this)">🩴 Huarache Gd.</button>
+            <button class="category-btn" onclick="selectCategory('Tenis Grande', this)">👟 Tenis Gde.</button>
+        </div>
+
+        <div class="form-group">
+            <label for="modelo">2. MODELO / DESCRIPCIÓN:</label>
+            <input type="text" id="modelo" class="input-text" placeholder="Ej. Modelo Moño, Azul Rey, etc.">
+
+            <label>3. SELECCIONA LA TALLA:</label>
+            <div class="tallas-grid">
+                <button class="talla-btn" onclick="selectTalla('9', this)">9</button>
+                <button class="talla-btn" onclick="selectTalla('10', this)">10</button>
+                <button class="talla-btn" onclick="selectTalla('11', this)">11</button>
+                <button class="talla-btn" onclick="selectTalla('12', this)">12</button>
+                <button class="talla-btn" onclick="selectTalla('13', this)">13</button>
+                <button class="talla-btn" onclick="selectTalla('14', this)">14</button>
+                <button class="talla-btn" onclick="selectTalla('15', this)">15</button>
+                <button class="talla-btn" onclick="selectTalla('16', this)">16</button>
+                <button class="talla-btn" onclick="selectTalla('17', this)">17</button>
+            </div>
+
+            <button class="btn-register" onclick="registrarVenta()">📝 Registrar Venta (Local)</button>
+        </div>
+
+        <div class="log-container">
+            <label style="color: var(--primary);">📥 VENTAS REGISTRADAS HOY (Guardado Local):</label>
+            <ul id="log-list" class="log-list">
+                </ul>
+        </div>
     </div>
 
+    <script>
+        let categoriaSeleccionada = "";
+        let tallaSeleccionada = "";
+
+        // Detectar si hay internet en tiempo real en el celular
+        function actualizarEstadoRed() {
+            const statusBadge = document.getElementById('network-status');
+            if (navigator.onLine) {
+                statusBadge.textContent = "● Conectado (Sincronización Lista)";
+                statusBadge.className = "online";
+            } else {
+                statusBadge.textContent = "● Fuera de línea (Guardando en Celular)";
+                statusBadge.className = "offline";
+            }
+        }
+        window.addEventListener('online', actualizarEstadoRed);
+        window.addEventListener('offline', actualizarEstadoRed);
+        actualizarEstadoRed();
+
+        function selectCategory(category, element) {
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            categoriaSeleccionada = category;
+        }
+
+        function selectTalla(talla, element) {
+            document.querySelectorAll('.talla-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            tallaSeleccionada = talla;
+        }
+
+        // Guardar la venta en la memoria del navegador (Offline First)
+        function registrarVenta() {
+            const modeloInput = document.getElementById('modelo');
+            const modelo = modeloInput.value.trim();
+
+            if (!categoriaSeleccionada || !modelo || !tallaSeleccionada) {
+                alert("Por favor completa: Categoría, Modelo y Talla.");
+                return;
+            }
+
+            const venta = {
+                categoria: categoriaSeleccionada,
+                modelo: modelo,
+                talla: tallaSeleccionada,
+                hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+
+            // Traer las ventas viejas de la memoria local, sumar la nueva y volver a guardar
+            let ventasActuales = JSON.parse(localStorage.getItem('ventas_tianguis')) || [];
+            ventasActuales.push(venta);
+            localStorage.setItem('ventas_tianguis', JSON.stringify(ventasActuales));
+
+            // Limpiar formulario y refrescar pantalla
+            modeloInput.value = "";
+            document.querySelectorAll('.talla-btn').forEach(btn => btn.classList.remove('active'));
+            tallaSeleccionada = "";
+            
+            cargarVentasLocales();
+        }
+
+        function cargarVentasLocales() {
+            const lista = document.getElementById('log-list');
+            lista.innerHTML = "";
+            let ventasActuales = JSON.parse(localStorage.getItem('ventas_tianguis')) || [];
+            
+            // Mostrar de la más nueva a la más vieja
+            ventasActuales.reverse().forEach(v => {
+                const li = document.createElement('li');
+                li.className = "log-item";
+                li.innerHTML = `<span><strong>[${v.categoria}]</strong> ${v.modelo} - Talla ${v.talla}</span> <span style="color:#888;">${v.hora}</span>`;
+                lista.appendChild(li);
+            });
+        }
+
+        // Cargar datos al abrir la página
+        window.onload = cargarVentasLocales;
+    </script>
 </body>
 </html>
